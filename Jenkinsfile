@@ -44,6 +44,14 @@ pipeline {
                 '''
             }
         }
+        stage('Push to DockerHub') {
+    steps {
+        sh '''
+        docker tag addressbook-app abhishekk612/addressbook-app:latest
+        docker push abhishekk612/addressbook-app:latest
+        '''
+    }
+}
     }
 
     post {
