@@ -1,83 +1,63 @@
 pipeline {
-
     agent any
 
-
-    parameters {
-
-        string(name: 'ENVIRONMENT', defaultValue: 'dev', description: 'Environment to deploy to')
-
-        booleanParam(name: 'RUN_TESTS', defaultValue: true, description: 'Run tests?')
-
-        choice(name: 'DEPLOY_SERVER', choices: ['dev', 'test', 'prod'], description: 'Choose deployment server')
-
+    tools {
+        maven 'Maven'
     }
 
+    environment {
+        IMAGE_NAME = 'addressbook-app'
+        CONTAINER_NAME = 'addressbook-container'
+    }
 
     stages {
 
-        stage('Dev Stage') {
-
+        stage('Checkout') {
             steps {
-
-                script {
-
-                    if (params.ENVIRONMENT == 'dev') {
-
-                        echo "Building for development environment"
-
-                    }
-
-                }
-
+                git 'https://github.com/AbhishekK612/addressbook.git'
             }
-
         }
 
-        stage('Test Stage') {
-
+        stage('Build') {
             steps {
-
-                script {
-
-                    if (params.RUN_TESTS) {
-
-                        echo "Running tests in the ${params.ENVIRONMENT} environment"
-
-                    } else {
-
-                        echo "Skipping tests"
-
-                    }
-
-                }
-
+                sh 'mvn clean compile'
             }
-
         }
 
-        stage('Prod Stage') {
-
+        stage('Test') {
             steps {
-
-                script {
-
-                    if (params.DEPLOY_SERVER == 'prod') {
-
-                        echo "Deploying to production server"
-
-                    } else {
-
-                        echo "Deploying to ${params.DEPLOY_SERVER} server"
-
-                    }
-
-                }
-
+                sh 'mvn test'
             }
-
         }
 
+        stage('Package') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE_NAME .'
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                sh '''
+                docker rm -f $CONTAINER_NAME || true
+                docker run -d -p 8081:8080 --name $CONTAINER_NAME $IMAGE_NAME
+                '''
+            }
+        }
     }
 
+    post {
+        success {
+            echo '✅ Deployment Successful!'
+        }
+        failure {
+            echo '❌ Pipeline Failed!'
+        }
+    }
 }
