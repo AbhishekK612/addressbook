@@ -46,10 +46,13 @@ pipeline {
         }
         stage('Push to DockerHub') {
     steps {
-        sh '''
-        docker tag addressbook-app abhishekk612/addressbook-app:latest
-        docker push abhishekk612/addressbook-app:latest
-        '''
+        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+            sh '''
+            echo $PASS | docker login -u $USER --password-stdin
+            docker tag addressbook-app $USER/addressbook-app:latest
+            docker push $USER/addressbook-app:latest
+            '''
+        }
     }
 }
     }
