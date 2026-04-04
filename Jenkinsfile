@@ -12,12 +12,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/AbhishekK612/addressbook.git'
-            }
-        }
-
         stage('Build') {
             steps {
                 sh 'mvn clean compile'
